@@ -1,6 +1,7 @@
-langchain
-langchain-openai
-langchain-mcp-adapters
+langchain == 1.2.6
+langchain-core == 1.2.7
+langchain-mcp-adapters == 0.2.1
 mcp
 fastmcp
 python-dotenv
+openai

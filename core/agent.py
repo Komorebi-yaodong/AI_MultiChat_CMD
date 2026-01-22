@@ -66,7 +66,7 @@ class ScamAgent:
     def _build_context(self, global_history):
         """构建 OpenAI 格式消息列表"""
         messages = [{"role": "system", "content": self.system_prompt}]
-        user_buffer = []
+        user_buffer = [{"role": "user", "content": f"## system/n/n{self.system_prompt}"}]
 
         for msg in global_history:
             if msg['role_id'] == self.id:

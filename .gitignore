@@ -1,5 +1,5 @@
-./servers/*
-./history/*
+servers/
+history/
 
 user.json
 config.json
