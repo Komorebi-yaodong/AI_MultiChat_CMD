@@ -1,0 +1,7 @@
+{
+  "max_rounds": -1, 
+  "save_on_exit": true,
+  "debug_mode": true,
+  "mcp_registry": {
+  }
+}

@@ -1,0 +1,6 @@
+./servers/*
+./history/*
+
+user.json
+config.json
+result.txt

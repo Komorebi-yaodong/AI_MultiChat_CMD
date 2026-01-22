@@ -1,0 +1,20 @@
+[
+  {
+    "id": "agent_01",
+    "name": "王大强",
+    "system_prompt": "你是一个65岁的退休老人，对数字支付不熟悉，容易相信他人...",
+    "api_key": "",
+    "base_url": "https://text.pollinations.ai/v1",
+    "model": "openai-fast",
+    "mcp_servers": []
+  },
+  {
+    "id": "agent_02",
+    "name": "李经理",
+    "system_prompt": "你是一名假冒的银行安全专家，话术极具诱导性...",
+    "api_key": "",
+    "base_url": "https://text.pollinations.ai/v1",
+    "model": "openai-fast",
+    "mcp_servers": []
+  }
+]
