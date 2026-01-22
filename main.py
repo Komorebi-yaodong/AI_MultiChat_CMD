@@ -31,14 +31,19 @@ async def main():
                 break
 
             elif cmd in ["list", "show"]:
-                print("\n" + "="*40)
-                print(f"{'序号':<4} | {'角色':<10} | {'消息内容'}")
-                print("-" * 40)
+                print("\n" + "="*60)
+                print(f"{'序号':<4} | {'角色':<10} | {'属性':<8} | {'消息内容'}")
+                print("-" * 60)
                 for i, msg in enumerate(manager.global_history):
-                    # 限制显示长度以美化 CLI
+                    # 检查是否有工具调用
+                    has_tools = "TOOL" if msg.get('internal_thoughts') else "TEXT"
                     content_preview = msg['content'].replace('\n', ' ')
-                    print(f"{i:03d}  | {msg['role_name']:<10} | {content_preview}")
-                print("="*40)
+                    # 截断过长内容
+                    if len(content_preview) > 50:
+                        content_preview = content_preview[:47] + "..."
+                        
+                    print(f"{i:03d}  | {msg['role_name']:<10} | {has_tools:<8} | {content_preview}")
+                print("="*60)
 
             elif cmd == "delete":
                 if not args:
@@ -48,7 +53,8 @@ async def main():
                     idx = int(args[0])
                     removed = manager.delete_message(idx)
                     if removed:
-                        print(f"[成功] 已删除序号 {idx} 的消息: [{removed['role_name']}]: {removed['content'][:20]}...")
+                        has_tools = " (含工具调用)" if removed.get('internal_thoughts') else ""
+                        print(f"[成功] 已删除序号 {idx}{has_tools}: [{removed['role_name']}]")
                     else:
                         print(f"[错误] 无效的序号: {idx}")
                 except ValueError:
@@ -59,26 +65,31 @@ async def main():
                     print("用法: speak <agent_id>")
                     continue
                 agent_id = args[0]
-                print(f"[*] 正在等待 {agent_id} ({manager.agents.get(agent_id).name if agent_id in manager.agents else '未知'}) 回复...")
+                print(f"[*] 正在等待 {agent_id} 回复...")
                 msg = await manager.agent_speak(agent_id)
                 if msg:
                     print(f"\n[{msg['role_name']}]: {msg['content']}")
+                    if msg.get('internal_thoughts'):
+                        print(f"    (触发了 {len(msg['internal_thoughts'])//2} 次工具交互)")
 
             elif cmd == "auto":
                 if not args:
                     print("用法: auto <n>")
                     continue
-                n = int(args[0])
-                agent_ids = list(manager.agents.keys())
-                if not agent_ids:
-                    print("错误：没有角色。")
-                    continue
-                
-                for i in range(n):
-                    agent_id = agent_ids[i % len(agent_ids)]
-                    print(f"[*] ({i+1}/{n}) {agent_id} 正在思考...")
-                    msg = await manager.agent_speak(agent_id)
-                    print(f"[{msg['role_name']}]: {msg['content']}")
+                try:
+                    n = int(args[0])
+                    agent_ids = list(manager.agents.keys())
+                    if not agent_ids:
+                        print("错误：没有角色。")
+                        continue
+                    
+                    for i in range(n):
+                        agent_id = agent_ids[i % len(agent_ids)]
+                        print(f"[*] ({i+1}/{n}) {agent_id} 正在思考...")
+                        msg = await manager.agent_speak(agent_id)
+                        print(f"[{msg['role_name']}]: {msg['content']}")
+                except ValueError:
+                    print("参数错误")
 
             elif cmd == "export":
                 name = args[0] if args else None
@@ -90,24 +101,24 @@ async def main():
                     print("用法: load <path>")
                     continue
                 await manager.load_history(args[0])
-                print(f"已成功加载历史并重同步 {len(manager.agents)} 个角色记忆。")
+                print(f"已成功加载历史 (包含工具调用数据)。")
 
             elif cmd == "status":
                 print("\n--- 角色状态与私有工具 ---")
                 for aid, agent in manager.agents.items():
-                    tools_str = ", ".join([t.name for t in agent.tools]) if agent.tools else "无"
+                    tools_str = ", ".join([t.name for t in agent.tools_map.values()]) if agent.tools_map else "无"
                     print(f"ID: {aid:12} | 姓名: {agent.name:10} | 私有工具: {tools_str}")
 
             elif cmd == "help":
                 print("""
 指令列表:
-  list / show   [新] 列出所有消息及其序号
-  delete <n>    [新] 根据序号删除消息，并重置所有角色记忆到该状态
+  list / show   列出消息，标记 [TOOL] 表示该轮对话包含隐藏的工具调用
+  delete <n>    删除序号 <n> 的消息 (及其关联的所有隐藏工具调用)
   speak <id>    强制指定 ID 为 <id> 的角色生成下一条回复
   auto <n>      按照 user.json 中的顺序自动循环对话 <n> 轮
   status        查看当前已加载的角色及其关联的私有工具
   export [name] 将当前对话状态保存至 ./history/[name].json
-  load <path>   从指定文件导入对话记录并初始化所有角色状态
+  load <path>   从指定文件导入对话记录
   exit          退出并根据配置自动保存
                 """)
             else:
